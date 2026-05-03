@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador: Reportar Phishing ou Spam</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #f1f5f9;
+      padding: 18px;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #0f172a;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 18px; }
+    h1 { margin: 0; font-size: 28px; font-weight: 900; }
+    .subtitle { margin: 6px 0 0; color: #64748b; font-size: 15px; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+      gap: 18px;
+    }
+    main {
+      border-radius: 28px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 12px 28px rgba(15,23,42,0.08);
+      overflow: hidden;
+    }
+    .topbar { background: #0f172a; color: white; padding: 18px; }
+    .topbar-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .muted-light { font-size: 13px; color: #cbd5e1; }
+    .title-light { font-size: 20px; font-weight: 900; }
+    .score-pill {
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      padding: 8px 12px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      color: #cbd5e1;
+      font-size: 12px;
+      margin: 10px 0 6px;
+    }
+    .progress-track {
+      height: 8px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 5%;
+      background: #60a5fa;
+      border-radius: 999px;
+      transition: width 0.2s ease;
+    }
+    .content { padding: 20px; }
+    .email-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 24px;
+      overflow: hidden;
+    }
+    .email-head {
+      background: #f8fafc;
+      padding: 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .email-head-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .subject-label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+    .subject { font-size: 20px; font-weight: 900; }
+    .meta { margin-top: 12px; display: grid; gap: 4px; font-size: 14px; }
+    .preview { color: #475569; }
+    .menu-wrap { position: relative; }
+    .menu-button {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: white;
+      cursor: pointer;
+      font-size: 22px;
+      font-weight: 900;
+    }
+    .menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 50px;
+      width: 245px;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 18px;
+      box-shadow: 0 18px 36px rgba(15,23,42,0.18);
+      z-index: 20;
+      overflow: hidden;
+    }
+    .menu.open { display: block; }
+    .menu-title {
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #64748b;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .menu-option {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border: none;
+      border-bottom: 1px solid #f1f5f9;
+      background: white;
+      cursor: pointer;
+      text-align: left;
+      font-size: 14px;
+      color: #334155;
+      font-weight: 700;
+    }
+    .menu-option:hover { background: #f8fafc; }
+    .body-area { padding: 18px; }
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      font-family: inherit;
+      line-height: 1.5;
+      color: #1e293b;
+      font-size: 15px;
+    }
+    .fake-link {
+      margin-top: 18px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 900;
+      cursor: default;
+      font-size: 14px;
+      box-shadow: 0 6px 16px rgba(37,99,235,0.22);
+    }
+    .url-preview {
+      margin-top: 10px;
+      min-height: 34px;
+      border-radius: 14px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #94a3b8;
+      word-break: break-all;
+    }
+    .url-preview.active {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: #334155;
+    }
+    .task-box {
+      margin-top: 18px;
+      border-radius: 22px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 16px;
+      color: #1e3a8a;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .feedback {
+      margin-top: 18px;
+      border-radius: 22px;
+      padding: 16px;
+      border: 1px solid #a7f3d0;
+      background: #ecfdf5;
+    }
+    .feedback.incorrect {
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+    .feedback-title-row { display: flex; align-items: center; gap: 10px; }
+    .feedback-icon { font-size: 24px; }
+    .feedback-title { font-weight: 900; color: #047857; font-size: 17px; }
+    .feedback.incorrect .feedback-title { color: #b91c1c; }
+    .selected-action { font-size: 13px; color: #475569; margin-top: 2px; }
+    .feedback p { margin: 12px 0 0; color: #334155; font-size: 14px; line-height: 1.45; }
+    .feedback ul { margin: 12px 0 0; padding-left: 20px; color: #334155; font-size: 14px; line-height: 1.45; }
+    .feedback li { margin-bottom: 7px; }
+    .nav-row { margin-top: 18px; display: flex; gap: 10px; justify-content: space-between; }
+    .nav-btn {
+      border: 1px solid #cbd5e1;
+      background: white;
+      color: #334155;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .nav-btn.primary {
+      border: none;
+      background: #2563eb;
+      color: white;
+    }
+    .nav-btn:disabled {
+      background: #f8fafc;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+    .nav-btn.primary:disabled {
+      background: #cbd5e1;
+      color: white;
+    }
+    aside { display: grid; gap: 14px; align-content: start; }
+    .side-card {
+      border-radius: 24px;
+      background: white;
+      padding: 18px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 6px 16px rgba(15,23,42,0.06);
+    }
+    .side-title { font-size: 18px; font-weight: 900; }
+    .side-grid { margin-top: 12px; display: grid; gap: 10px; }
+    .info-pill {
+      border-radius: 16px;
+      background: #eff6ff;
+      padding: 12px;
+      color: #1e3a8a;
+    }
+    .info-pill.neutral {
+      background: #f8fafc;
+      color: #334155;
+    }
+    .result-pill {
+      display: none;
+      border-radius: 16px;
+      background: #fffbeb;
+      padding: 12px;
+      color: #92400e;
+      line-height: 1.4;
+    }
+    .result-pill.good {
+      background: #ecfdf5;
+      color: #047857;
+    }
+    .reset-btn {
+      margin-top: 14px;
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      background: white;
+      border-radius: 14px;
+      padding: 11px;
+      font-weight: 900;
+      cursor: pointer;
+      color: #334155;
+    }
+    .dark-card {
+      border-radius: 24px;
+      background: #0f172a;
+      color: white;
+      padding: 18px;
+    }
+    .dark-card .inner {
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .dark-card .box {
+      border-radius: 16px;
+      background: rgba(255,255,255,0.1);
+      padding: 12px;
+    }
+    .reflect p {
+      margin: 10px 0 0;
+      color: #475569;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    @media (max-width: 850px) {
+      body { padding: 12px; }
+      .layout { grid-template-columns: 1fr; }
+      h1 { font-size: 23px; }
+      .topbar-row { align-items: flex-start; }
+      .subject { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Simulador: Reportar Phishing ou Spam</h1>
+      <p class="subtitle">Abre as opções da mensagem e escolhe a ação correta. O feedback só aparece depois de reportares.</p>
+    </header>
+
+    <div class="layout">
+      <main>
+        <div class="topbar">
+          <div class="topbar-row">
+            <div>
+              <div class="muted-light">Caixa de correio</div>
+              <div class="title-light">Mensagem para classificar</div>
+            </div>
+            <div class="score-pill" id="scorePill">Pontuação: 0/8</div>
+          </div>
+          <div class="progress-meta">
+            <span id="progressText">Mensagem 1 de 8</span>
+            <span id="progressPercent">5%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+        </div>
+
+        <div class="content">
+          <div class="email-card">
+            <div class="email-head">
+              <div class="email-head-row">
+                <div style="min-width:0;">
+                  <div class="subject-label">Assunto</div>
+                  <div class="subject" id="subject"></div>
+                </div>
+
+                <div class="menu-wrap">
+                  <button class="menu-button" id="menuButton" type="button" aria-label="Abrir opções extra" title="Opções extra">⋯</button>
+                  <div class="menu" id="menu">
+                    <div class="menu-title">Opções da mensagem</div>
+                    <button class="menu-option" data-action="report_phishing"><span>🚨</span><span>Reportar como phishing</span></button>
+                    <button class="menu-option" data-action="report_spam"><span>📢</span><span>Reportar como spam</span></button>
+                    <button class="menu-option" data-action="delete"><span>🗑️</span><span>Apagar mensagem</span></button>
+                    <button class="menu-option" data-action="archive"><span>🗂️</span><span>Arquivar mensagem</span></button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="meta">
+                <div><strong>De:</strong> <span id="sender"></span></div>
+                <div><strong>Pré-visualização:</strong> <span class="preview" id="preview"></span></div>
+              </div>
+            </div>
+
+            <div class="body-area">
+              <pre id="bodyText"></pre>
+
+              <button class="fake-link" id="fakeLink" type="button"></button>
+              <div class="url-preview" id="urlPreview"><strong>Destino do link:</strong> passa o rato por cima do botão para ver o URL real</div>
+            </div>
+          </div>
+
+          <div class="task-box" id="taskBox">
+            <strong>Tarefa:</strong> decide se a mensagem deve ser reportada como <strong>phishing</strong> ou como <strong>spam</strong>. Para responder, abre o menu de opções no canto superior direito da mensagem.
+          </div>
+
+          <div class="feedback" id="feedback" style="display:none;"></div>
+
+          <div class="nav-row">
+            <button class="nav-btn" id="prevBtn" type="button">← Anterior</button>
+            <button class="nav-btn primary" id="nextBtn" type="button">Seguinte →</button>
+          </div>
+        </div>
+      </main>
+
+      <aside>
+        <section class="side-card">
+          <div class="side-title">Resumo da atividade</div>
+          <div class="side-grid">
+            <div class="info-pill"><strong id="answeredCount">0</strong> de <span id="totalCount">8</span> mensagens reportadas</div>
+            <div class="info-pill neutral"><strong id="scoreCount">0</strong> ações corretas</div>
+            <div class="result-pill" id="finalResult"></div>
+          </div>
+          <button class="reset-btn" id="resetBtn" type="button">↺ Recomeçar</button>
+        </section>
+
+        <section class="dark-card">
+          <div class="side-title">Diferença essencial</div>
+          <div class="inner">
+            <div class="box"><strong>Phishing:</strong> tenta enganar o utilizador para obter palavras-passe, códigos, dados bancários ou acesso a contas.</div>
+            <div class="box"><strong>Spam:</strong> é publicidade ou comunicação indesejada, geralmente comercial, sem tentativa direta de roubo de dados.</div>
+          </div>
+        </section>
+
+        <section class="side-card reflect">
+          <div class="side-title">Para refletir</div>
+          <p>Porque é que não basta apagar uma mensagem de phishing? Qual é a vantagem de a reportar?</p>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const messages = [
+      {
+        id: 1,
+        type: "phishing",
+        senderName: "Suporte Microsoft",
+        senderEmail: "seguranca-conta@microsoft-verificacao24.com",
+        subject: "Ação urgente: confirme a sua conta",
+        preview: "A sua conta será bloqueada se não confirmar os seus dados nos próximos 30 minutos.",
+        body: `Caro utilizador,
+
+Detetámos uma tentativa de acesso suspeita à sua conta. Para evitar o bloqueio permanente, confirme a sua palavra-passe através do botão abaixo.
+
+Se não agir nos próximos 30 minutos, poderá perder acesso ao email e aos seus ficheiros.`,
+        linkText: "Confirmar conta",
+        linkUrl: "https://microsoft-verificacao24.com/login/confirmar",
+        explanation: [
+          "O remetente imita a Microsoft, mas o domínio não é oficial.",
+          "A mensagem usa urgência e ameaça de bloqueio para pressionar o utilizador.",
+          "Pede confirmação de palavra-passe através de um link suspeito.",
+          "A ação correta é reportar como phishing, não apenas apagar."
+        ]
+      },
+      {
+        id: 2,
+        type: "spam",
+        senderName: "MegaPromoções",
+        senderEmail: "newsletter@megapromocoes.pt",
+        subject: "70% de desconto em tecnologia esta semana",
+        preview: "Campanha promocional com descontos em acessórios, telemóveis e computadores.",
+        body: `Olá!
+
+Esta semana temos descontos até 70% em vários artigos de tecnologia. Veja as campanhas disponíveis na nossa loja online.
+
+Recebeu esta mensagem porque subscreveu comunicações comerciais ou participou numa campanha anterior.`,
+        linkText: "Ver promoções",
+        linkUrl: "https://www.megapromocoes.pt/campanhas/tecnologia",
+        explanation: [
+          "A mensagem é publicidade comercial, não tenta roubar credenciais diretamente.",
+          "Não há ameaça, pedido de palavra-passe, códigos ou dados bancários.",
+          "Pode ser indesejada ou excessiva, por isso deve ser reportada como spam/publicidade não desejada.",
+          "Spam e phishing não são iguais: phishing tenta enganar para obter dados, dinheiro ou acesso."
+        ]
+      },
+      {
+        id: 3,
+        type: "phishing",
+        senderName: "CTT Entregas",
+        senderEmail: "entregas@ctt-portugal-pagamento.net",
+        subject: "Encomenda retida: pagamento necessário",
+        preview: "Pague 1,95 € para libertar a encomenda ainda hoje.",
+        body: `Estimado cliente,
+
+A sua encomenda encontra-se retida por falta de pagamento de uma pequena taxa alfandegária no valor de 1,95 €.
+
+Para evitar devolução ao remetente, efetue o pagamento até ao final do dia.`,
+        linkText: "Pagar taxa",
+        linkUrl: "https://ctt-portugal-pagamento.net/desbloquear-encomenda",
+        explanation: [
+          "O domínio tenta parecer dos CTT, mas não é o domínio oficial.",
+          "O valor baixo é usado para levar a vítima a inserir dados bancários sem desconfiar muito.",
+          "A mensagem cria urgência: pagamento até ao final do dia.",
+          "Deve ser reportada como phishing porque tenta obter dados de pagamento."
+        ]
+      },
+      {
+        id: 4,
+        type: "spam",
+        senderName: "Curso Online Express",
+        senderEmail: "info@cursoexpress.pt",
+        subject: "Aprenda inglês em 7 dias com 80% de desconto",
+        preview: "Oferta especial para novos alunos. Inscrição promocional por tempo limitado.",
+        body: `Bom dia,
+
+Estamos a divulgar uma campanha de formação online com desconto especial. A inscrição é opcional e pode consultar mais informações no nosso website.
+
+Se não quiser receber mais mensagens, pode cancelar a subscrição.`,
+        linkText: "Ver curso",
+        linkUrl: "https://www.cursoexpress.pt/promocao-ingles",
+        explanation: [
+          "É uma mensagem comercial/promocional.",
+          "Não tenta obter palavra-passe, código de autenticação ou dados bancários de forma enganosa.",
+          "Pode ser publicidade indesejada, logo a classificação adequada é spam.",
+          "Apesar de usar uma promessa exagerada, o objetivo principal é publicidade, não roubo de credenciais."
+        ]
+      },
+      {
+        id: 5,
+        type: "phishing",
+        senderName: "Banco Atlântico",
+        senderEmail: "apoio@bancoatlantico-seguro.com",
+        subject: "Validação obrigatória da sua conta bancária",
+        preview: "A sua conta ficará limitada se não validar os seus dados de acesso.",
+        body: `Caro cliente,
+
+Por motivos de segurança, a sua conta bancária necessita de validação imediata. Confirme o seu número de cliente, palavra-passe e código de segurança para evitar limitações no acesso.
+
+Esta validação é obrigatória.`,
+        linkText: "Validar conta",
+        linkUrl: "https://bancoatlantico-seguro.com/validar-acesso",
+        explanation: [
+          "O domínio não corresponde claramente ao domínio oficial do banco.",
+          "Pede dados altamente sensíveis: palavra-passe e código de segurança.",
+          "Usa ameaça de limitação da conta para pressionar a vítima.",
+          "Deve ser reportada como phishing, pois tenta roubar credenciais bancárias."
+        ]
+      },
+      {
+        id: 6,
+        type: "spam",
+        senderName: "Loja Casa Feliz",
+        senderEmail: "campanhas@lojacasafeliz.pt",
+        subject: "Novidades em decoração para primavera",
+        preview: "Conheça a nova coleção de decoração, iluminação e mobiliário.",
+        body: `Olá,
+
+A nossa nova coleção de primavera já está disponível. Temos novidades em decoração, iluminação e mobiliário.
+
+Pode consultar a campanha no nosso site ou cancelar a subscrição no final da mensagem.`,
+        linkText: "Ver coleção",
+        linkUrl: "https://www.lojacasafeliz.pt/nova-colecao",
+        explanation: [
+          "A mensagem é claramente promocional.",
+          "Não existe pedido de dados sensíveis.",
+          "Não há ameaça, urgência de segurança ou tentativa de imitar uma instituição crítica.",
+          "Se for indesejada, deve ser reportada como spam."
+        ]
+      },
+      {
+        id: 7,
+        type: "phishing",
+        senderName: "Google Drive",
+        senderEmail: "drive-alertas@google-storage-support.io",
+        subject: "Os seus ficheiros serão eliminados",
+        preview: "Confirme a sua identidade para evitar a eliminação automática dos ficheiros.",
+        body: `Olá,
+
+O seu armazenamento atingiu o limite máximo. Para evitar a eliminação automática dos seus ficheiros, confirme a sua identidade e atualize os dados da sua conta.
+
+Esta ação deve ser concluída nas próximas 2 horas.`,
+        linkText: "Confirmar identidade",
+        linkUrl: "https://google-storage-support.io/drive/validar-identidade",
+        explanation: [
+          "O domínio não é o domínio oficial habitual da Google.",
+          "A mensagem ameaça eliminar ficheiros para provocar medo.",
+          "Pede confirmação de identidade através de um link suspeito.",
+          "A ação correta é reportar como phishing."
+        ]
+      },
+      {
+        id: 8,
+        type: "spam",
+        senderName: "Viagens Flash",
+        senderEmail: "ofertas@viagensflash.pt",
+        subject: "Escapadinhas de fim de semana desde 49 €",
+        preview: "Promoções limitadas para hotéis e viagens de fim de semana.",
+        body: `Olá,
+
+Temos novas promoções para escapadinhas de fim de semana. Consulte os destinos disponíveis e escolha a melhor oferta para si.
+
+Recebeu este email por estar inscrito na nossa newsletter.`,
+        linkText: "Ver escapadinhas",
+        linkUrl: "https://www.viagensflash.pt/escapadinhas",
+        explanation: [
+          "É publicidade de viagens.",
+          "Não tenta roubar credenciais ou códigos de autenticação.",
+          "Mesmo que seja indesejada, o comportamento correto é classificá-la como spam.",
+          "Não há sinais fortes de phishing, como falsa urgência de segurança ou pedido de dados sensíveis."
+        ]
+      },
+      {
+        id: 9,
+        type: "phishing",
+        senderName: "Netflix Portugal",
+        senderEmail: "pagamentos@netflix-conta-ajuda.com",
+        subject: "Falha no pagamento da sua subscrição",
+        preview: "Atualize o método de pagamento para evitar a suspensão imediata do serviço.",
+        body: `Olá,
+
+Não conseguimos processar o pagamento da sua subscrição. Para evitar a suspensão imediata da conta, atualize os seus dados de pagamento através do botão abaixo.
+
+A sua conta ficará bloqueada se a atualização não for concluída hoje.`,
+        linkText: "Atualizar pagamento",
+        linkUrl: "https://netflix-conta-ajuda.com/pt/pagamento",
+        explanation: [
+          "O domínio tenta imitar a Netflix, mas não é o domínio oficial.",
+          "A mensagem pede atualização de dados de pagamento num link suspeito.",
+          "A suspensão imediata é usada como pressão psicológica.",
+          "Deve ser reportada como phishing porque tenta obter dados financeiros."
+        ]
+      },
+      {
+        id: 10,
+        type: "spam",
+        senderName: "Ginásio FitMais",
+        senderEmail: "campanhas@ginasiofitmais.pt",
+        subject: "Inscrição sem mensalidade até domingo",
+        preview: "Promoção especial para novos membros com avaliação física gratuita.",
+        body: `Olá,
+
+Durante esta semana, novas inscrições têm acesso a avaliação física gratuita e isenção da primeira mensalidade. Consulte as condições no nosso site.
+
+Pode cancelar a subscrição desta newsletter a qualquer momento.`,
+        linkText: "Ver campanha",
+        linkUrl: "https://www.ginasiofitmais.pt/promocoes",
+        explanation: [
+          "É uma comunicação comercial de promoção de serviços.",
+          "Não pede credenciais, códigos ou dados bancários de forma suspeita.",
+          "Embora possa ser indesejada, enquadra-se em spam/publicidade.",
+          "A ação adequada é reportar como spam se o utilizador não quiser receber este tipo de mensagens."
+        ]
+      },
+      {
+        id: 11,
+        type: "phishing",
+        senderName: "Autoridade Tributária",
+        senderEmail: "reembolsos@financas-portugal.info",
+        subject: "Reembolso fiscal disponível",
+        preview: "Tem direito a um reembolso de 184,60 €. Confirme os dados bancários para receber.",
+        body: `Exmo. contribuinte,
+
+Foi aprovado um reembolso fiscal no valor de 184,60 €. Para receber o montante, confirme o seu IBAN e dados de acesso através do portal abaixo.
+
+O pedido expira em 24 horas.`,
+        linkText: "Receber reembolso",
+        linkUrl: "https://financas-portugal.info/reembolso/validar",
+        explanation: [
+          "O domínio não corresponde ao portal oficial das Finanças.",
+          "A promessa de reembolso é usada para levar o utilizador a fornecer dados bancários.",
+          "O prazo de 24 horas cria pressão artificial.",
+          "Deve ser reportada como phishing."
+        ]
+      },
+      {
+        id: 12,
+        type: "spam",
+        senderName: "Revista Saúde Hoje",
+        senderEmail: "newsletter@saudehoje.pt",
+        subject: "10 hábitos para dormir melhor",
+        preview: "Leia a nova edição da nossa newsletter semanal de bem-estar.",
+        body: `Olá,
+
+Na edição desta semana partilhamos artigos sobre sono, alimentação e hábitos de bem-estar.
+
+Recebeu esta newsletter porque subscreveu conteúdos da Revista Saúde Hoje.`,
+        linkText: "Ler artigos",
+        linkUrl: "https://www.saudehoje.pt/newsletter/sono",
+        explanation: [
+          "É uma newsletter promocional/informativa.",
+          "Não pede dados sensíveis nem tenta obter acesso a contas.",
+          "Se for indesejada ou não solicitada, deve ser tratada como spam.",
+          "Não apresenta sinais claros de phishing."
+        ]
+      },
+      {
+        id: 13,
+        type: "phishing",
+        senderName: "Administrador Escolar",
+        senderEmail: "admin@portal-escolar-seguro.net",
+        subject: "Reposição obrigatória da palavra-passe",
+        preview: "Todos os docentes devem confirmar a palavra-passe ainda hoje.",
+        body: `Bom dia,
+
+Por motivos de manutenção, todos os docentes devem confirmar a palavra-passe da plataforma escolar. Quem não concluir o processo hoje perderá acesso à plataforma.
+
+Use o botão abaixo para manter a sua conta ativa.`,
+        linkText: "Confirmar palavra-passe",
+        linkUrl: "https://portal-escolar-seguro.net/login/docentes",
+        explanation: [
+          "O remetente parece institucional, mas o domínio é genérico e suspeito.",
+          "Nenhuma instituição deve pedir confirmação de palavra-passe por email.",
+          "A ameaça de perda de acesso cria urgência artificial.",
+          "Deve ser reportada como phishing."
+        ]
+      },
+      {
+        id: 14,
+        type: "spam",
+        senderName: "Editora Saber+",
+        senderEmail: "novidades@editorasabermais.pt",
+        subject: "Novos manuais e recursos digitais",
+        preview: "Conheça os novos recursos educativos disponíveis para professores.",
+        body: `Caro professor,
+
+A Editora Saber+ apresenta os novos manuais e recursos digitais para o próximo ano letivo. Pode consultar o catálogo online e pedir acesso de demonstração.
+
+Esta comunicação é de natureza promocional.`,
+        linkText: "Consultar catálogo",
+        linkUrl: "https://www.editorasabermais.pt/catalogo",
+        explanation: [
+          "É uma comunicação promocional dirigida a professores.",
+          "Não pede dados de acesso nem códigos de autenticação.",
+          "Pode ser indesejada, mas não tem objetivo evidente de roubo de dados.",
+          "A classificação adequada é spam/publicidade."
+        ]
+      },
+      {
+        id: 15,
+        type: "phishing",
+        senderName: "Instagram Security",
+        senderEmail: "security@instagram-verification-center.com",
+        subject: "A sua conta foi denunciada",
+        preview: "Confirme a identidade para evitar desativação permanente.",
+        body: `Olá,
+
+A sua conta recebeu várias denúncias por violação das regras da comunidade. Para evitar a desativação permanente, confirme a sua identidade e dados de acesso.
+
+Tem 12 horas para concluir a verificação.`,
+        linkText: "Verificar identidade",
+        linkUrl: "https://instagram-verification-center.com/appeal",
+        explanation: [
+          "O domínio não é o domínio oficial do Instagram.",
+          "A mensagem usa medo de perda da conta para forçar uma ação rápida.",
+          "Pede dados de acesso através de um link externo.",
+          "Deve ser reportada como phishing."
+        ]
+      },
+      {
+        id: 16,
+        type: "spam",
+        senderName: "Fotografia Pro",
+        senderEmail: "newsletter@fotografiapro.pt",
+        subject: "Workshop de fotografia com desconto",
+        preview: "Aprenda edição e composição fotográfica num workshop online.",
+        body: `Olá,
+
+Estão abertas as inscrições para o nosso workshop online de fotografia. Durante esta semana, os participantes têm acesso a 30% de desconto.
+
+Pode consultar o programa no nosso site.`,
+        linkText: "Ver workshop",
+        linkUrl: "https://www.fotografiapro.pt/workshop-online",
+        explanation: [
+          "A mensagem promove um serviço ou curso.",
+          "Não há pedido de palavras-passe, códigos ou dados sensíveis.",
+          "Pode ser publicidade indesejada, logo deve ser reportada como spam.",
+          "Não existem sinais fortes de tentativa de roubo de credenciais."
+        ]
+      },
+      {
+        id: 17,
+        type: "phishing",
+        senderName: "PayPal Segurança",
+        senderEmail: "alerta@paypal-resolucao-conta.com",
+        subject: "Transação suspeita detetada",
+        preview: "Confirme se reconhece uma transação de 429,99 €.",
+        body: `Caro cliente,
+
+Detetámos uma transação suspeita no valor de 429,99 €. Se não reconhece esta operação, confirme imediatamente a sua identidade para cancelar a transação.
+
+A falta de resposta será considerada autorização.`,
+        linkText: "Cancelar transação",
+        linkUrl: "https://paypal-resolucao-conta.com/cancelar-transacao",
+        explanation: [
+          "O domínio não é o domínio oficial do PayPal.",
+          "A mensagem usa medo financeiro para provocar uma reação imediata.",
+          "O link leva a uma página de falsa resolução de conta.",
+          "Deve ser reportada como phishing."
+        ]
+      },
+      {
+        id: 18,
+        type: "spam",
+        senderName: "Restaurante Sabor Local",
+        senderEmail: "reservas@saborlocal.pt",
+        subject: "Menu especial de fim de semana",
+        preview: "Reserve mesa e conheça o novo menu de degustação.",
+        body: `Olá,
+
+Este fim de semana temos um menu especial de degustação. As reservas podem ser feitas através do nosso website ou por telefone.
+
+Recebeu esta comunicação por estar na nossa lista de clientes.`,
+        linkText: "Ver menu",
+        linkUrl: "https://www.saborlocal.pt/menu-fim-semana",
+        explanation: [
+          "É uma mensagem comercial de restaurante.",
+          "Não tenta roubar credenciais ou dados bancários.",
+          "Pode ser considerada spam se for indesejada.",
+          "A ação adequada é reportar como spam, não como phishing."
+        ]
+      },
+      {
+        id: 19,
+        type: "phishing",
+        senderName: "DHL Portugal",
+        senderEmail: "notificacoes@dhl-entrega-urgente.com",
+        subject: "Morada incompleta para entrega",
+        preview: "Atualize a sua morada para evitar devolução da encomenda.",
+        body: `Estimado cliente,
+
+A sua encomenda não pôde ser entregue porque a morada está incompleta. Atualize os seus dados de entrega e pague uma pequena taxa de reprocessamento para receber a encomenda amanhã.
+
+A encomenda será devolvida se não agir.`,
+        linkText: "Atualizar morada",
+        linkUrl: "https://dhl-entrega-urgente.com/atualizar-morada",
+        explanation: [
+          "O domínio tenta imitar a DHL, mas não é oficial.",
+          "Combina atualização de dados pessoais com pagamento de uma taxa.",
+          "A ameaça de devolução da encomenda cria urgência.",
+          "Deve ser reportada como phishing."
+        ]
+      },
+      {
+        id: 20,
+        type: "spam",
+        senderName: "TechWorld Newsletter",
+        senderEmail: "newsletter@techworld.pt",
+        subject: "Novos gadgets lançados esta semana",
+        preview: "Veja a nossa seleção semanal de tecnologia, apps e acessórios.",
+        body: `Olá,
+
+Na newsletter desta semana reunimos novos gadgets, aplicações úteis e acessórios em destaque. Pode ler a seleção completa no nosso site.
+
+Se não quiser receber mais emails, pode cancelar a subscrição.`,
+        linkText: "Ler newsletter",
+        linkUrl: "https://www.techworld.pt/newsletter/gadgets",
+        explanation: [
+          "É uma newsletter promocional/informativa.",
+          "Não pede palavras-passe, códigos ou dados bancários.",
+          "Se for indesejada, deve ser classificada como spam.",
+          "Não há sinais fortes de phishing."
+        ]
+      }
+    ];
+
+
+    function shuffleArray(items) {
+      const copy = [...items];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function createSessionMessages() {
+      const phishingMessages = messages.filter(message => message.type === "phishing");
+      const spamMessages = messages.filter(message => message.type === "spam");
+
+      return shuffleArray([
+        ...shuffleArray(phishingMessages).slice(0, 4),
+        ...shuffleArray(spamMessages).slice(0, 4)
+      ]);
+    }
+
+    let sessionMessages = createSessionMessages();
+    let index = 0;
+    let reportedActions = {};
+    let menuOpen = false;
+
+    const els = {
+      scorePill: document.getElementById("scorePill"),
+      progressText: document.getElementById("progressText"),
+      progressPercent: document.getElementById("progressPercent"),
+      progressBar: document.getElementById("progressBar"),
+      subject: document.getElementById("subject"),
+      sender: document.getElementById("sender"),
+      preview: document.getElementById("preview"),
+      bodyText: document.getElementById("bodyText"),
+      fakeLink: document.getElementById("fakeLink"),
+      urlPreview: document.getElementById("urlPreview"),
+      menuButton: document.getElementById("menuButton"),
+      menu: document.getElementById("menu"),
+      taskBox: document.getElementById("taskBox"),
+      feedback: document.getElementById("feedback"),
+      prevBtn: document.getElementById("prevBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      answeredCount: document.getElementById("answeredCount"),
+      totalCount: document.getElementById("totalCount"),
+      scoreCount: document.getElementById("scoreCount"),
+      finalResult: document.getElementById("finalResult"),
+      resetBtn: document.getElementById("resetBtn")
+    };
+
+    function expectedAction(type) {
+      return type === "phishing" ? "report_phishing" : "report_spam";
+    }
+
+    function readableType(type) {
+      return type === "phishing" ? "phishing" : "spam/publicidade";
+    }
+
+    function actionLabel(action) {
+      if (action === "report_phishing") return "Reportar como phishing";
+      if (action === "report_spam") return "Reportar como spam";
+      if (action === "delete") return "Apagar mensagem";
+      if (action === "archive") return "Arquivar mensagem";
+      return "";
+    }
+
+    function getScore() {
+      return sessionMessages.reduce((total, item) => {
+        return reportedActions[item.id] === expectedAction(item.type) ? total + 1 : total;
+      }, 0);
+    }
+
+    function getAnsweredCount() {
+      return Object.keys(reportedActions).length;
+    }
+
+    function report(action) {
+      const message = sessionMessages[index];
+      reportedActions[message.id] = action;
+      menuOpen = false;
+      render();
+    }
+
+    function renderMenu() {
+      els.menu.classList.toggle("open", menuOpen);
+    }
+
+    function renderFeedback(message, action) {
+      const correctAction = expectedAction(message.type);
+      const isCorrect = action === correctAction;
+      els.feedback.style.display = "block";
+      els.feedback.className = isCorrect ? "feedback" : "feedback incorrect";
+
+      const title = isCorrect ? "Resposta correta" : "Atenção: esta ação não foi a mais adequada";
+      const icon = isCorrect ? "✅" : "⚠️";
+      const lis = message.explanation.map(item => `<li>${escapeHtml(item)}</li>`).join("");
+
+      els.feedback.innerHTML = `
+        <div class="feedback-title-row">
+          <div class="feedback-icon">${icon}</div>
+          <div>
+            <div class="feedback-title">${title}</div>
+            <div class="selected-action">Selecionaste: <strong>${escapeHtml(actionLabel(action))}</strong></div>
+          </div>
+        </div>
+        <p>Esta mensagem deve ser classificada como <strong>${escapeHtml(readableType(message.type))}</strong>. A ação correta era <strong>${escapeHtml(actionLabel(correctAction))}</strong>.</p>
+        <ul>${lis}</ul>
+      `;
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function render() {
+      const message = sessionMessages[index];
+      const score = getScore();
+      const answeredCount = getAnsweredCount();
+      const total = sessionMessages.length;
+      const percentage = Math.round(((index + 1) / total) * 100);
+      const action = reportedActions[message.id];
+
+      els.scorePill.textContent = `Pontuação: ${score}/${total}`;
+      els.progressText.textContent = `Mensagem ${index + 1} de ${total}`;
+      els.progressPercent.textContent = `${percentage}%`;
+      els.progressBar.style.width = `${percentage}%`;
+
+      els.subject.textContent = message.subject;
+      els.sender.textContent = `${message.senderName} <${message.senderEmail}>`;
+      els.preview.textContent = message.preview;
+      els.bodyText.textContent = message.body;
+      els.fakeLink.textContent = message.linkText;
+
+      els.urlPreview.classList.remove("active");
+      els.urlPreview.innerHTML = "<strong>Destino do link:</strong> passa o rato por cima do botão para ver o URL real";
+
+      els.prevBtn.disabled = index === 0;
+      els.nextBtn.disabled = index === sessionMessages.length - 1;
+
+      els.answeredCount.textContent = answeredCount;
+      els.totalCount.textContent = total;
+      els.scoreCount.textContent = score;
+
+      if (answeredCount === total) {
+        els.finalResult.style.display = "block";
+        els.finalResult.classList.toggle("good", score >= 6);
+        els.finalResult.textContent = score >= 6
+          ? "Muito bom. Conseguiste distinguir a maioria das situações."
+          : "Revê as diferenças entre spam e phishing. O importante é justificar a ação correta.";
+      } else {
+        els.finalResult.style.display = "none";
+      }
+
+      if (action) {
+        els.taskBox.style.display = "none";
+        renderFeedback(message, action);
+      } else {
+        els.taskBox.style.display = "block";
+        els.feedback.style.display = "none";
+        els.feedback.innerHTML = "";
+      }
+
+      renderMenu();
+    }
+
+    els.menuButton.addEventListener("click", () => {
+      menuOpen = !menuOpen;
+      renderMenu();
+    });
+
+    document.querySelectorAll(".menu-option").forEach(button => {
+      button.addEventListener("click", () => {
+        report(button.dataset.action);
+      });
+    });
+
+    els.fakeLink.addEventListener("mouseenter", () => {
+      const message = sessionMessages[index];
+      els.urlPreview.classList.add("active");
+      els.urlPreview.innerHTML = `<strong>Destino do link:</strong> ${escapeHtml(message.linkUrl)}`;
+    });
+
+    els.fakeLink.addEventListener("mouseleave", () => {
+      els.urlPreview.classList.remove("active");
+      els.urlPreview.innerHTML = "<strong>Destino do link:</strong> passa o rato por cima do botão para ver o URL real";
+    });
+
+    els.fakeLink.addEventListener("focus", () => {
+      const message = sessionMessages[index];
+      els.urlPreview.classList.add("active");
+      els.urlPreview.innerHTML = `<strong>Destino do link:</strong> ${escapeHtml(message.linkUrl)}`;
+    });
+
+    els.fakeLink.addEventListener("blur", () => {
+      els.urlPreview.classList.remove("active");
+      els.urlPreview.innerHTML = "<strong>Destino do link:</strong> passa o rato por cima do botão para ver o URL real";
+    });
+
+    els.fakeLink.addEventListener("click", event => {
+      event.preventDefault();
+    });
+
+    els.prevBtn.addEventListener("click", () => {
+      if (index > 0) {
+        index -= 1;
+        menuOpen = false;
+        render();
+      }
+    });
+
+    els.nextBtn.addEventListener("click", () => {
+      if (index < sessionMessages.length - 1) {
+        index += 1;
+        menuOpen = false;
+        render();
+      }
+    });
+
+    els.resetBtn.addEventListener("click", () => {
+      sessionMessages = createSessionMessages();
+      index = 0;
+      reportedActions = {};
+      menuOpen = false;
+      render();
+    });
+
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".menu-wrap")) {
+        menuOpen = false;
+        renderMenu();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
